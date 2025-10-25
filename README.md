@@ -99,17 +99,6 @@ cd build
 ctest --verbose
 ```
 
-## 可视化
-
-项目包含完整的可视化功能，可以生成轨迹图像：
-
-```bash
-# 运行测试后生成可视化图像
-python3 ../visualize_trajectory.py test1_straight_line.json test1_straight_line.png
-python3 ../visualize_trajectory.py test2_turn_trajectory.json test2_turn_trajectory.png
-python3 ../visualize_trajectory.py test_single_obstacle.json test_single_obstacle.png
-python3 ../visualize_trajectory.py test_multiple_obstacles.json test_multiple_obstacles.png
-
-# 或批量生成所有图像
-./visualize_all.sh
-```
+### 测试效果
+![绕障](assets/imgs/test2_multiple_obstacles_with_kinematics.png "绕障")
+![贴边](assets/imgs/test2_near_boundary_with_kinematics.png "贴边")

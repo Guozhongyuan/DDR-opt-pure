@@ -638,6 +638,3 @@ double inv_sparse_resolution_ = 1.0 / sparse_resolution;
 - 日志输出改用std::cout
 - 时间测量改用std::chrono
 - 参数读取改用配置对象
-
-祝实现顺利！如有问题请参考原始代码`optimizer.cpp`或提问。
-
