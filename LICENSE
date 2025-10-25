@@ -1,0 +1,18 @@
+GNU GENERAL PUBLIC LICENSE
+Version 3, 29 June 2007
+
+Copyright (C) 2007 Free Software Foundation, Inc. <https://fsf.org/>
+Everyone is permitted to copy and distribute verbatim copies
+of this license document, but changing it is not allowed.
+
+This project is based on DDR-opt (https://github.com/ZJU-FAST-Lab/DDR-opt)
+by ZJU-FAST-Lab, which is licensed under GPL-3.0.
+
+This derivative work maintains the same GPL-3.0 license as the original project.
+
+The original DDR-opt project and its authors retain all rights to the original work.
+This derivative work includes modifications to remove ROS dependencies and add
+enhanced visualization features.
+
+For the full GPL-3.0 license text, please refer to:
+https://www.gnu.org/licenses/gpl-3.0.txt

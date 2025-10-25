@@ -2,7 +2,11 @@
 
 ## 项目简介
 
-这是DDR-opt项目后端轨迹优化模块的纯净版本，完全移除了ROS依赖，可以作为独立的C++库使用。项目专注于微分驱动机器人（Differential Drive Robot）的轨迹规划与优化。
+这是基于 [DDR-opt](https://github.com/ZJU-FAST-Lab/DDR-opt) 项目后端轨迹优化模块的纯净版本，完全移除了ROS依赖，可以作为独立的C++库使用。项目专注于微分驱动机器人（Differential Drive Robot）的轨迹规划与优化。
+
+> **重要说明**: 本项目基于 [ZJU-FAST-Lab/DDR-opt](https://github.com/ZJU-FAST-Lab/DDR-opt) 进行修改和简化，移除了ROS依赖并添加了增强的可视化功能。原始项目版权归原作者所有。
+
+> **免责声明**: 本项目仅用于学习和研究目的。使用者需要自行承担使用风险，并确保遵守相关法律法规和许可证要求。
 
 ### 核心特性
 
@@ -102,3 +106,41 @@ ctest --verbose
 ### 测试效果
 ![绕障](assets/imgs/test2_multiple_obstacles_with_kinematics.png "绕障")
 ![贴边](assets/imgs/test2_near_boundary_with_kinematics.png "贴边")
+
+## 引用和致谢
+
+### 原始项目
+本项目基于以下开源项目进行修改和简化：
+
+- **原始项目**: [DDR-opt](https://github.com/ZJU-FAST-Lab/DDR-opt) by ZJU-FAST-Lab
+- **论文**: Zhang, M., Chen, N., Wang, H., et al. "Universal Trajectory Optimization Framework for Differential Drive Robot Class." IEEE Transactions on Automation Science and Engineering, 2025.
+
+### 主要修改
+- 移除了ROS依赖，使其成为独立的C++库
+- 添加了增强的可视化功能（速度、加速度、角速度曲线）
+- 简化了项目结构，专注于核心优化算法
+- 改进了测试用例和示例代码
+
+### 许可证
+本项目遵循与原始项目相同的许可证。原始项目使用 GPL-3.0 许可证。
+
+**重要**: 由于本项目基于GPL-3.0许可的开源项目进行修改，本项目也必须遵循GPL-3.0许可证。这意味着：
+- 任何使用、修改或分发本项目的代码都必须遵循GPL-3.0许可证
+- 如果您将本项目集成到其他项目中，整个项目也必须开源并遵循GPL-3.0
+- 详细许可证信息请查看 [LICENSE](LICENSE) 文件
+
+### 学术引用
+如果您在学术研究中使用本项目，请引用原始论文：
+
+```bibtex
+@ARTICLE{zhang2024universaltrajectoryoptimizationframework,
+  author={Zhang, Mengke and Chen, Nanhe and Wang, Hu and Qiu, Jianxiong and Han, Zhichao and Ren, Qiuyu and Xu, Chao and Gao, Fei and Cao, Yanjun},
+  journal={IEEE Transactions on Automation Science and Engineering}, 
+  title={Universal Trajectory Optimization Framework for Differential Drive Robot Class}, 
+  year={2025},
+  volume={22},
+  number={},
+  pages={13030-13045},
+  keywords={Robots;Mobile robots;Kinematics;Trajectory optimization;Planning;Robot kinematics;Computational modeling;Dynamics;Wheels;Tracking;Motion planning;trajectory optimization;differential drive robot class;nonholonomic dynamics},
+  doi={10.1109/TASE.2025.3550676}}
+```
