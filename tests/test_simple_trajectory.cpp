@@ -182,10 +182,10 @@ bool test_straight_line() {
     std::cout << "===================\n\n";
     
     // 使用matplotlib-cpp直接可视化
-    TrajectoryVisualizer visualizer(16.0, 12.0, 150);
-    visualizer.visualize(input, output, std::vector<Eigen::Vector3d>(), 
-                        config.check_points, "test1_straight_line.png", false);
-    std::cout << "轨迹可视化已保存到: test1_straight_line.png\n\n";
+    TrajectoryVisualizer visualizer(20.0, 16.0, 150);
+    visualizer.visualizeWithKinematics(input, output, std::vector<Eigen::Vector3d>(), 
+                                      config.check_points, "test1_straight_line_with_kinematics.png", false);
+    std::cout << "轨迹可视化（含运动学曲线）已保存到: test1_straight_line_with_kinematics.png\n\n";
     
     std::cout << "Test PASSED: Straight line trajectory generated successfully\n";
     return true;
@@ -341,10 +341,10 @@ bool test_turn_trajectory() {
     std::cout << "===================\n\n";
     
     // 使用matplotlib-cpp直接可视化
-    TrajectoryVisualizer visualizer(16.0, 12.0, 150);
-    visualizer.visualize(input, output, std::vector<Eigen::Vector3d>(), 
-                        config.check_points, "test1_turn_trajectory.png", false);
-    std::cout << "轨迹可视化已保存到: test1_turn_trajectory.png\n\n";
+    TrajectoryVisualizer visualizer(20.0, 16.0, 150);
+    visualizer.visualizeWithKinematics(input, output, std::vector<Eigen::Vector3d>(), 
+                                      config.check_points, "test1_turn_trajectory_with_kinematics.png", false);
+    std::cout << "轨迹可视化（含运动学曲线）已保存到: test1_turn_trajectory_with_kinematics.png\n\n";
     
     std::cout << "Test PASSED: Turn trajectory generated successfully\n";
     return true;

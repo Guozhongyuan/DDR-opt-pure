@@ -197,10 +197,10 @@ bool test_single_obstacle() {
     std::vector<Eigen::Vector3d> obstacles;
     obstacles.push_back(Eigen::Vector3d(4.0, 0.0, 0.5));  // (x, y, radius)
     
-    TrajectoryVisualizer visualizer(16.0, 12.0, 150);
-    visualizer.visualize(input, output, obstacles, config.check_points, 
-                        "test2_single_obstacle.png", false);
-    std::cout << "轨迹可视化已保存到: test2_single_obstacle.png\n\n";
+    TrajectoryVisualizer visualizer(20.0, 16.0, 150);
+    visualizer.visualizeWithKinematics(input, output, obstacles, config.check_points, 
+                                      "test2_single_obstacle_with_kinematics.png", false);
+    std::cout << "轨迹可视化（含运动学曲线）已保存到: test2_single_obstacle_with_kinematics.png\n\n";
     
     std::cout << "Test PASSED: Successfully avoided obstacle\n";
     return true;
@@ -397,10 +397,226 @@ bool test_multiple_obstacles() {
     std::cout << "===================\n\n";
     
     // 使用matplotlib-cpp直接可视化
-    TrajectoryVisualizer visualizer(16.0, 12.0, 150);
-    visualizer.visualize(input, output, obstacles, config.check_points, 
-                        "test2_multiple_obstacles.png", false);
-    std::cout << "轨迹可视化已保存到: test2_multiple_obstacles.png\n\n";
+    TrajectoryVisualizer visualizer(20.0, 16.0, 150);
+    visualizer.visualizeWithKinematics(input, output, obstacles, config.check_points, 
+                                        "test2_multiple_obstacles_with_kinematics.png", false);
+    std::cout << "轨迹可视化（含运动学曲线）已保存到: test2_multiple_obstacles_with_kinematics.png\n\n";
+    
+    std::cout << "Test PASSED: Successfully navigated through multiple obstacles\n";
+    return true;
+}
+
+/**
+ * @brief 测试: 靠边停车
+ */
+bool test_near_boundary() {
+    std::cout << "\n========== Test: Near Boundary ==========\n";
+    
+    OptimizerConfig config = OptimizerConfig::defaultConfig();
+    config.verbose = false;
+    config.safe_distance = 0.0;
+    
+    auto collision_checker = std::make_shared<SimpleCircleObstacles>(
+        Eigen::Vector2d(-10, -10),
+        Eigen::Vector2d(10, 10)
+    );
+    
+    // 添加多个障碍物
+    std::vector<Eigen::Vector3d> obstacles = {
+        Eigen::Vector3d(0.0, 0.05, 0.05),
+        Eigen::Vector3d(-0.25, 0.05, 0.05),
+        Eigen::Vector3d(-0.5, 0.05, 0.05),
+        Eigen::Vector3d(-0.75, 0.05, 0.05),
+        Eigen::Vector3d(-1.0, 0.05, 0.05),
+        Eigen::Vector3d(-1.0, -1.5, 0.05),
+        Eigen::Vector3d(-1.25, 0.05, 0.05),
+        Eigen::Vector3d(-1.5, 0.05, 0.05),
+        Eigen::Vector3d(-1.75, 0.05, 0.05),
+        Eigen::Vector3d(-2.0, 0.05, 0.05),
+        Eigen::Vector3d(-2.0, -0.5, 0.05),
+        Eigen::Vector3d(-2.0, -1.0, 0.05),
+    };
+    for (const auto& obstacle : obstacles) {
+        collision_checker->addObstacle(obstacle.x(), obstacle.y(), obstacle.z());
+    }
+    
+    std::cout << "Added " << obstacles.size() << " obstacles\n";
+    
+    DDROptimizer optimizer(config, collision_checker);
+    
+    TrajectoryInput input;
+
+    double init_x = -0.5;
+    double init_y = -1.0;
+    double init_theta = 0.0;
+
+    double final_x = -1.5;
+    double final_y = -0.5;
+    double final_theta = 0.0;
+    double final_s = 2.0;
+    
+    input.start_state.resize(2, 3);
+    input.start_state << 
+        init_theta, 0.0, 0.0,
+        0.0, 0.0, 0.0;
+    
+    input.final_state.resize(2, 3);
+    input.final_state << 
+        0.0, 0.0, 0.0,
+        final_s, 0.0, 0.0;
+    
+    input.start_state_XYTheta = Eigen::Vector3d(init_x, init_y, init_theta);
+    input.final_state_XYTheta = Eigen::Vector3d(final_x, final_y, final_theta);
+
+    // 提供途径点
+    input.waypoints.push_back(Eigen::Vector3d(0.0, -1.0, 0.5));
+    input.waypoint_positions.push_back(Eigen::Vector3d(-1.0, final_y, 0.0));
+    
+    input.initial_segment_time = 1.0;
+    input.is_cut = false;
+    
+    TrajectoryOutput output;
+    bool success = optimizer.optimize(input, output);
+    
+    if (!success) {
+        std::cerr << "Test FAILED: Multiple obstacles avoidance failed\n";
+        return false;
+    }
+    
+    output.print();
+    
+    // ========== 打印轨迹细节 ==========
+    std::cout << "\n===== 轨迹细节 =====\n";
+    std::cout << std::fixed << std::setprecision(6);
+    
+    // 起点
+    std::cout << "起点 (期望): (" 
+              << input.start_state_XYTheta.x() << ", "
+              << input.start_state_XYTheta.y() << ", "
+              << input.start_state_XYTheta.z() << " rad)\n";
+    
+    std::cout << "起点 (实际): (" 
+              << input.start_state_XYTheta.x() << ", "
+              << input.start_state_XYTheta.y() << ", "
+              << input.start_state_XYTheta.z() << " rad)\n";
+    
+    // 终点
+    std::cout << "终点 (期望): (" 
+              << input.final_state_XYTheta.x() << ", "
+              << input.final_state_XYTheta.y() << ", "
+              << input.final_state_XYTheta.z() << " rad)\n";
+    
+    // 计算实际终点位置（通过积分轨迹）
+    Eigen::Vector3d actual_end_XYTheta = input.start_state_XYTheta;
+    double dt = 0.01;  // 10ms采样
+    double total_time = output.segment_durations.sum();
+    int num_samples = static_cast<int>(total_time / dt) + 1;
+    
+    // 检查所有障碍物的最小距离
+    std::vector<double> min_distances(3, 1e10);
+    double overall_min_distance = 1e10;
+    
+    for (int i = 1; i < num_samples; i++) {
+        double t = std::min(i * dt, total_time);
+        Eigen::Vector2d sigma = output.trajectory.getPos(t);
+        Eigen::Vector2d dsigma = output.trajectory.getVel(t);
+        
+        double yaw = sigma.x();
+        double ds = dsigma.y();
+        
+        actual_end_XYTheta.x() += ds * cos(yaw) * dt;
+        actual_end_XYTheta.y() += ds * sin(yaw) * dt;
+        actual_end_XYTheta.z() = yaw;
+        
+        // 检查到所有障碍物的距离
+        Eigen::Vector2d current_pos(actual_end_XYTheta.x(), actual_end_XYTheta.y());
+        for (size_t j = 0; j < obstacles.size(); j++) {
+            double dist = (current_pos - obstacles[j].head(2)).norm() - obstacles[j].z();
+            min_distances[j] = std::min(min_distances[j], dist);
+            overall_min_distance = std::min(overall_min_distance, dist);
+        }
+    }
+    
+    std::cout << "终点 (实际): (" 
+              << actual_end_XYTheta.x() << ", "
+              << actual_end_XYTheta.y() << ", "
+              << actual_end_XYTheta.z() << " rad)\n";
+    
+    // 终点误差
+    Eigen::Vector3d position_error = actual_end_XYTheta - input.final_state_XYTheta;
+    double position_error_norm = position_error.head(2).norm();
+    double angle_error = std::abs(position_error.z());
+    
+    std::cout << "\n终点误差:\n";
+    std::cout << "  位置误差: " << position_error_norm * 1000.0 << " mm\n";
+    std::cout << "  X误差: " << position_error.x() * 1000.0 << " mm\n";
+    std::cout << "  Y误差: " << position_error.y() * 1000.0 << " mm\n";
+    std::cout << "  角度误差: " << angle_error * 180.0 / M_PI << " deg\n";
+    
+    std::cout << "\n避障信息:\n";
+    for (size_t j = 0; j < obstacles.size(); j++) {
+        std::cout << "  障碍物" << (j+1) << " @ (" 
+                  << obstacles[j].x() << ", " 
+                  << obstacles[j].y() << "): "
+                  << "最小距离 = " << min_distances[j] * 1000.0 << " mm\n";
+    }
+    std::cout << "  整体最小距离: " << overall_min_distance * 1000.0 << " mm\n";
+    std::cout << "  安全距离: " << config.safe_distance * 1000.0 << " mm\n";
+    
+    if (overall_min_distance < config.safe_distance) {
+        std::cout << "  警告: 轨迹可能穿过障碍物！\n";
+    } else {
+        std::cout << "  ✓ 成功避开所有障碍物\n";
+    }
+    
+    // 检查到中途航点的最小距离
+    if (!input.waypoint_positions.empty()) {
+        std::cout << "\n中途航点接近度:\n";
+        
+        for (size_t wp_idx = 0; wp_idx < input.waypoint_positions.size(); wp_idx++) {
+            Eigen::Vector2d waypoint_pos = input.waypoint_positions[wp_idx].head(2);
+            double min_dist_to_waypoint = 1e10;
+            
+            // 重新遍历轨迹
+            Eigen::Vector3d current_XYTheta = input.start_state_XYTheta;
+            for (int i = 1; i < num_samples; i++) {
+                double t = std::min(i * dt, total_time);
+                Eigen::Vector2d sigma = output.trajectory.getPos(t);
+                Eigen::Vector2d dsigma = output.trajectory.getVel(t);
+                
+                double yaw = sigma.x();
+                double ds = dsigma.y();
+                
+                current_XYTheta.x() += ds * cos(yaw) * dt;
+                current_XYTheta.y() += ds * sin(yaw) * dt;
+                
+                Eigen::Vector2d current_pos = current_XYTheta.head(2);
+                double dist = (current_pos - waypoint_pos).norm();
+                min_dist_to_waypoint = std::min(min_dist_to_waypoint, dist);
+            }
+            
+            std::cout << "  航点" << (wp_idx + 1) << " @ (" 
+                      << waypoint_pos.x() << ", " 
+                      << waypoint_pos.y() << "): "
+                      << "最小距离 = " << min_dist_to_waypoint * 1000.0 << " mm";
+            
+            if (min_dist_to_waypoint < 0.5) {
+                std::cout << " ✓ 经过\n";
+            } else if (min_dist_to_waypoint < 1.0) {
+                std::cout << " ⚠ 接近\n";
+            } else {
+                std::cout << " ✗ 偏离\n";
+            }
+        }
+    }
+    
+    std::cout << "===================\n\n";
+    
+    // 使用matplotlib-cpp直接可视化
+    TrajectoryVisualizer visualizer(20.0, 16.0, 150);
+    visualizer.visualizeWithKinematics(input, output, obstacles, config.check_points, 
+                                    "test2_near_boundary_with_kinematics.png", false);
+    std::cout << "轨迹可视化（含运动学曲线）已保存到: test2_near_boundary_with_kinematics.png\n\n";
     
     std::cout << "Test PASSED: Successfully navigated through multiple obstacles\n";
     return true;
@@ -423,6 +639,12 @@ int main(int argc, char** argv) {
     // 测试2: 多障碍物
     total++;
     if (test_multiple_obstacles()) {
+        passed++;
+    }
+
+    // 测试2: 靠边停车
+    total++;
+    if (test_near_boundary()) {
         passed++;
     }
     
