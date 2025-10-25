@@ -1,0 +1,38 @@
+# DDR Optimizer Configuration File
+# 纯净版后端轨迹优化器配置
+
+# ============ 运动学约束 ============
+max_vel: 5.0                      # 最大线速度 (m/s)
+min_vel: -5.0                     # 最小线速度 (m/s)
+max_acc: 5.0                      # 最大加速度 (m/s²)
+max_omega: 1.0                    # 最大角速度 (rad/s)
+max_domega: 50.0                  # 最大角加速度 (rad/s²)
+max_centripetal_acc: 10000.0      # 最大向心加速度 (m/s²)
+if_directly_constrain_v_omega: false  # 是否直接约束速度和角速度
+
+# ============ 惩罚权重 ============
+time_weight: 50.0                 # 时间权重
+acc_weight: 300.0                 # 加速度约束权重
+domega_weight: 300.0              # 角加速度约束权重
+collision_weight: 500000.0        # 碰撞约束权重
+moment_weight: 300.0              # 力矩约束权重
+mean_time_weight: 300.0           # 时间分布均衡权重
+cen_acc_weight: 300.0             # 向心加速度约束权重
+
+# ============ 其他参数 ============
+smoothingFactor: 0.01             # 平滑L1参数
+safeDis: 0.3                      # 安全距离 (m)
+sparseResolution: 8               # 采样分辨率
+timeResolution: 0.4               # 时间分辨率
+mintrajNum: 3                     # 最小轨迹段数
+mean_time_lowBound: 0.50          # 时间下界比例
+mean_time_uppBound: 2.00          # 时间上界比例
+if_standard_diff: true            # 使用标准微分驱动模型
+trajPredictResolution: 0.01       # 轨迹预测分辨率
+verbose: true                     # 详细输出
+
+# ICR参数（当if_standard_diff=false时使用）
+ICR_yl: 0.0
+ICR_yr: 0.0
+ICR_xv: 0.0
+
