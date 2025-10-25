@@ -2,7 +2,7 @@
 #include "ddr_optimizer/collision_interface.h"
 #include "ddr_optimizer/config.h"
 #include "ddr_optimizer/trajectory_data.h"
-#include "ddr_optimizer/trajectory_exporter.h"
+#include "ddr_optimizer/visualizer.h"
 
 #include <iostream>
 #include <iomanip>
@@ -181,18 +181,11 @@ bool test_straight_line() {
     
     std::cout << "===================\n\n";
     
-    // 导出轨迹数据（包含车体多边形）
-    std::vector<Eigen::Vector2d> check_points;
-    check_points.emplace_back(0.5, 0.3);   // 右前
-    check_points.emplace_back(0.5, -0.3);  // 左前
-    check_points.emplace_back(-0.5, -0.3); // 左后
-    check_points.emplace_back(-0.5, 0.3);  // 右后
-    
-    if (TrajectoryExporter::exportToJSON(input, output, "test1_straight_line.json", 
-                                         std::vector<Eigen::Vector3d>(), check_points)) {
-        std::cout << "轨迹数据已导出到: test1_straight_line.json\n";
-        std::cout << "可视化命令: python3 ../visualize_trajectory.py test1_straight_line.json test1_straight_line.png\n\n";
-    }
+    // 使用matplotlib-cpp直接可视化
+    TrajectoryVisualizer visualizer(16.0, 12.0, 150);
+    visualizer.visualize(input, output, std::vector<Eigen::Vector3d>(), 
+                        config.check_points, "test1_straight_line.png", false);
+    std::cout << "轨迹可视化已保存到: test1_straight_line.png\n\n";
     
     std::cout << "Test PASSED: Straight line trajectory generated successfully\n";
     return true;
@@ -347,18 +340,11 @@ bool test_turn_trajectory() {
     
     std::cout << "===================\n\n";
     
-    // 导出轨迹数据（包含车体多边形）
-    std::vector<Eigen::Vector2d> check_points;
-    check_points.emplace_back(0.5, 0.3);   // 右前
-    check_points.emplace_back(0.5, -0.3);  // 左前
-    check_points.emplace_back(-0.5, -0.3); // 左后
-    check_points.emplace_back(-0.5, 0.3);  // 右后
-    
-    if (TrajectoryExporter::exportToJSON(input, output, "test2_turn_trajectory.json", 
-                                         std::vector<Eigen::Vector3d>(), check_points)) {
-        std::cout << "轨迹数据已导出到: test2_turn_trajectory.json\n";
-        std::cout << "可视化命令: python3 ../visualize_trajectory.py test2_turn_trajectory.json test2_turn_trajectory.png\n\n";
-    }
+    // 使用matplotlib-cpp直接可视化
+    TrajectoryVisualizer visualizer(16.0, 12.0, 150);
+    visualizer.visualize(input, output, std::vector<Eigen::Vector3d>(), 
+                        config.check_points, "test1_turn_trajectory.png", false);
+    std::cout << "轨迹可视化已保存到: test1_turn_trajectory.png\n\n";
     
     std::cout << "Test PASSED: Turn trajectory generated successfully\n";
     return true;

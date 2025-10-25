@@ -12,10 +12,10 @@ OptimizerConfig OptimizerConfig::defaultConfig() {
     
     // 设置默认车体检查点（四角，按顺时针顺序）
     config.check_points.clear();
-    config.check_points.emplace_back(0.5, 0.3);   // 右前
-    config.check_points.emplace_back(0.5, -0.3);  // 左前
-    config.check_points.emplace_back(-0.5, -0.3); // 左后
-    config.check_points.emplace_back(-0.5, 0.3);  // 右后
+    config.check_points.emplace_back(1.7, 0.5);   // 右前
+    config.check_points.emplace_back(1.7, -0.5);  // 左前
+    config.check_points.emplace_back(-0.3, -0.5); // 左后
+    config.check_points.emplace_back(-0.3, 0.5);  // 右后
     
     return config;
 }

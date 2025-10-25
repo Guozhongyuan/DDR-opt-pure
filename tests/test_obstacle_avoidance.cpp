@@ -2,7 +2,7 @@
 #include "ddr_optimizer/collision_interface.h"
 #include "ddr_optimizer/config.h"
 #include "ddr_optimizer/trajectory_data.h"
-#include "ddr_optimizer/trajectory_exporter.h"
+#include "ddr_optimizer/visualizer.h"
 
 #include <iostream>
 #include <iomanip>
@@ -21,7 +21,7 @@ bool test_single_obstacle() {
     
     OptimizerConfig config = OptimizerConfig::defaultConfig();
     config.verbose = true;
-    config.safe_distance = 0.5;  // 设置安全距离
+    config.safe_distance = 0.1;  // 设置安全距离
     
     // 创建碰撞检测器并添加障碍物
     auto collision_checker = std::make_shared<SimpleCircleObstacles>(
@@ -30,9 +30,9 @@ bool test_single_obstacle() {
     );
     
     // 在路径中间添加障碍物
-    collision_checker->addObstacle(2.5, 0.0, 0.5);  // (x, y, radius)
+    collision_checker->addObstacle(4.0, 0.0, 0.5);  // (x, y, radius)
     
-    std::cout << "Added obstacle at (2.5, 0.0) with radius 0.5\n";
+    std::cout << "Added obstacle at (4.0, 0.0) with radius 0.5\n";
     
     DDROptimizer optimizer(config, collision_checker);
     
@@ -46,19 +46,19 @@ bool test_single_obstacle() {
     input.final_state.resize(2, 3);
     input.final_state << 
         0.0, 0.0, 0.0,
-        5.0, 0.0, 0.0;
+        10.0, 0.0, 0.0;
     
     input.start_state_XYTheta = Eigen::Vector3d(0.0, 0.0, 0.0);
-    input.final_state_XYTheta = Eigen::Vector3d(5.0, 0.0, 0.0);
+    input.final_state_XYTheta = Eigen::Vector3d(10.0, 0.0, 0.0);
     
     // 添加中间路径点，帮助绕过障碍物
     input.waypoints.push_back(Eigen::Vector3d(0.0, 1.0, 0.5));   // 绕过障碍物上方
-    input.waypoints.push_back(Eigen::Vector3d(0.0, 2.5, 0.5));
     input.waypoints.push_back(Eigen::Vector3d(0.0, 4.0, 0.5));
+    input.waypoints.push_back(Eigen::Vector3d(0.0, 7.0, 0.5));
     
     input.waypoint_positions.push_back(Eigen::Vector3d(1.0, 1.0, 0.0));  // 稍微偏上
-    input.waypoint_positions.push_back(Eigen::Vector3d(2.5, 1.0, 0.0));  // 在障碍物上方经过
-    input.waypoint_positions.push_back(Eigen::Vector3d(4.0, 0.5, 0.0));  // 回到中线
+    input.waypoint_positions.push_back(Eigen::Vector3d(4.0, 1.0, 0.0));  // 在障碍物上方经过
+    input.waypoint_positions.push_back(Eigen::Vector3d(7.0, 0.5, 0.0));  // 回到中线
     
     input.initial_segment_time = 1.0;
     input.is_cut = false;
@@ -103,7 +103,7 @@ bool test_single_obstacle() {
     
     // 同时检查是否避开障碍物
     double min_obstacle_distance = 1e10;
-    Eigen::Vector2d obstacle_center(2.5, 0.0);
+    Eigen::Vector2d obstacle_center(4.0, 0.0);
     double obstacle_radius = 0.5;
     
     for (int i = 1; i < num_samples; i++) {
@@ -193,21 +193,14 @@ bool test_single_obstacle() {
     
     std::cout << "===================\n\n";
     
-    // 导出轨迹数据（包含障碍物和车体多边形）
+    // 使用matplotlib-cpp直接可视化
     std::vector<Eigen::Vector3d> obstacles;
-    obstacles.push_back(Eigen::Vector3d(2.5, 0.0, 0.5));  // (x, y, radius)
+    obstacles.push_back(Eigen::Vector3d(4.0, 0.0, 0.5));  // (x, y, radius)
     
-    std::vector<Eigen::Vector2d> check_points;
-    check_points.emplace_back(0.5, 0.3);   // 右前
-    check_points.emplace_back(0.5, -0.3);  // 左前
-    check_points.emplace_back(-0.5, -0.3); // 左后
-    check_points.emplace_back(-0.5, 0.3);  // 右后
-    
-    if (TrajectoryExporter::exportToJSON(input, output, "test_single_obstacle.json", 
-                                         obstacles, check_points)) {
-        std::cout << "轨迹数据已导出到: test_single_obstacle.json\n";
-        std::cout << "可视化命令: python3 ../visualize_trajectory.py test_single_obstacle.json test_single_obstacle.png\n\n";
-    }
+    TrajectoryVisualizer visualizer(16.0, 12.0, 150);
+    visualizer.visualize(input, output, obstacles, config.check_points, 
+                        "test2_single_obstacle.png", false);
+    std::cout << "轨迹可视化已保存到: test2_single_obstacle.png\n\n";
     
     std::cout << "Test PASSED: Successfully avoided obstacle\n";
     return true;
@@ -221,7 +214,7 @@ bool test_multiple_obstacles() {
     
     OptimizerConfig config = OptimizerConfig::defaultConfig();
     config.verbose = false;
-    config.safe_distance = 0.4;
+    config.safe_distance = 0.1;
     
     auto collision_checker = std::make_shared<SimpleCircleObstacles>(
         Eigen::Vector2d(-10, -10),
@@ -229,11 +222,16 @@ bool test_multiple_obstacles() {
     );
     
     // 添加多个障碍物
-    collision_checker->addObstacle(1.5, 0.3, 0.4);
-    collision_checker->addObstacle(3.0, -0.3, 0.4);
-    collision_checker->addObstacle(4.5, 0.2, 0.4);
+    std::vector<Eigen::Vector3d> obstacles = {
+        Eigen::Vector3d(3.0, 0.7, 0.3),
+        Eigen::Vector3d(6.0, -0.7, 0.3),
+        Eigen::Vector3d(8.0, 1.2, 0.3),
+    };
+    for (const auto& obstacle : obstacles) {
+        collision_checker->addObstacle(obstacle.x(), obstacle.y(), obstacle.z());
+    }
     
-    std::cout << "Added 3 obstacles\n";
+    std::cout << "Added " << obstacles.size() << " obstacles\n";
     
     DDROptimizer optimizer(config, collision_checker);
     
@@ -247,13 +245,13 @@ bool test_multiple_obstacles() {
     input.final_state.resize(2, 3);
     input.final_state << 
         0.0, 0.0, 0.0,
-        6.0, 0.0, 0.0;
+        10.0, 0.0, 0.0;
     
     input.start_state_XYTheta = Eigen::Vector3d(0.0, 0.0, 0.0);
-    input.final_state_XYTheta = Eigen::Vector3d(6.0, 0.0, 0.0);
+    input.final_state_XYTheta = Eigen::Vector3d(10.0, 0.0, 0.0);
     
     // 提供初始路径点
-    for (double s = 1.0; s < 6.0; s += 1.0) {
+    for (double s = 1.0; s < 10.0; s += 1.0) {
         input.waypoints.push_back(Eigen::Vector3d(0.0, s, 0.5));
         input.waypoint_positions.push_back(Eigen::Vector3d(s, 0.0, 0.0));
     }
@@ -299,11 +297,6 @@ bool test_multiple_obstacles() {
     int num_samples = static_cast<int>(total_time / dt) + 1;
     
     // 检查所有障碍物的最小距离
-    std::vector<Eigen::Vector2d> obstacle_centers = {
-        Eigen::Vector2d(1.5, 0.3),
-        Eigen::Vector2d(3.0, -0.3),
-        Eigen::Vector2d(4.5, 0.2)
-    };
     std::vector<double> min_distances(3, 1e10);
     double overall_min_distance = 1e10;
     
@@ -321,8 +314,8 @@ bool test_multiple_obstacles() {
         
         // 检查到所有障碍物的距离
         Eigen::Vector2d current_pos(actual_end_XYTheta.x(), actual_end_XYTheta.y());
-        for (size_t j = 0; j < obstacle_centers.size(); j++) {
-            double dist = (current_pos - obstacle_centers[j]).norm() - 0.4;  // radius = 0.4
+        for (size_t j = 0; j < obstacles.size(); j++) {
+            double dist = (current_pos - obstacles[j].head(2)).norm() - obstacles[j].z();
             min_distances[j] = std::min(min_distances[j], dist);
             overall_min_distance = std::min(overall_min_distance, dist);
         }
@@ -344,11 +337,11 @@ bool test_multiple_obstacles() {
     std::cout << "  Y误差: " << position_error.y() * 1000.0 << " mm\n";
     std::cout << "  角度误差: " << angle_error * 180.0 / M_PI << " deg\n";
     
-    std::cout << "\n避障信息 (3个障碍物):\n";
-    for (size_t j = 0; j < obstacle_centers.size(); j++) {
+    std::cout << "\n避障信息:\n";
+    for (size_t j = 0; j < obstacles.size(); j++) {
         std::cout << "  障碍物" << (j+1) << " @ (" 
-                  << obstacle_centers[j].x() << ", " 
-                  << obstacle_centers[j].y() << "): "
+                  << obstacles[j].x() << ", " 
+                  << obstacles[j].y() << "): "
                   << "最小距离 = " << min_distances[j] * 1000.0 << " mm\n";
     }
     std::cout << "  整体最小距离: " << overall_min_distance * 1000.0 << " mm\n";
@@ -403,23 +396,11 @@ bool test_multiple_obstacles() {
     
     std::cout << "===================\n\n";
     
-    // 导出轨迹数据（包含障碍物和车体多边形）
-    std::vector<Eigen::Vector3d> obstacles;
-    obstacles.push_back(Eigen::Vector3d(1.5, 0.3, 0.4));  // (x, y, radius)
-    obstacles.push_back(Eigen::Vector3d(3.0, -0.3, 0.4));
-    obstacles.push_back(Eigen::Vector3d(4.5, 0.2, 0.4));
-    
-    std::vector<Eigen::Vector2d> check_points;
-    check_points.emplace_back(0.5, 0.3);   // 右前
-    check_points.emplace_back(0.5, -0.3);  // 左前
-    check_points.emplace_back(-0.5, -0.3); // 左后
-    check_points.emplace_back(-0.5, 0.3);  // 右后
-    
-    if (TrajectoryExporter::exportToJSON(input, output, "test_multiple_obstacles.json", 
-                                         obstacles, check_points)) {
-        std::cout << "轨迹数据已导出到: test_multiple_obstacles.json\n";
-        std::cout << "可视化命令: python3 ../visualize_trajectory.py test_multiple_obstacles.json test_multiple_obstacles.png\n\n";
-    }
+    // 使用matplotlib-cpp直接可视化
+    TrajectoryVisualizer visualizer(16.0, 12.0, 150);
+    visualizer.visualize(input, output, obstacles, config.check_points, 
+                        "test2_multiple_obstacles.png", false);
+    std::cout << "轨迹可视化已保存到: test2_multiple_obstacles.png\n\n";
     
     std::cout << "Test PASSED: Successfully navigated through multiple obstacles\n";
     return true;
