@@ -13,13 +13,13 @@ struct OptimizerConfig {
     
     // 运动学约束
     struct Kinematic {
-        double max_vel = 5.0;           // 最大线速度 (m/s)
-        double min_vel = -5.0;          // 最小线速度 (m/s)
-        double max_acc = 5.0;           // 最大加速度 (m/s²)
-        double max_omega = 1.0;         // 最大角速度 (rad/s)
-        double max_domega = 50.0;       // 最大角加速度 (rad/s²)
-        double max_centripetal_acc = 10000.0;  // 最大向心加速度 (m/s²)
-        bool directly_constrain_v_omega = false;  // 是否直接约束速度和角速度
+        double max_vel = 1.0;           // 最大线速度 (m/s)
+        double min_vel = -1.0;          // 最小线速度 (m/s)
+        double max_acc = 1.0;           // 最大加速度 (m/s²)
+        double max_omega = 0.5;         // 最大角速度 (rad/s)
+        double max_domega = 0.5;       // 最大角加速度 (rad/s²)
+        double max_centripetal_acc = 1.0;  // 最大向心加速度 (m/s²)
+        bool directly_constrain_v_omega = true;  // 是否直接约束速度和角速度
     } kinematic;
     
     // 惩罚权重
@@ -28,7 +28,7 @@ struct OptimizerConfig {
         double time_weight_backup = 50.0;       // 重规划时的时间权重备份
         double acc_weight = 300.0;              // 加速度约束权重
         double domega_weight = 300.0;           // 角加速度约束权重
-        double collision_weight = 500000.0;     // 碰撞约束权重
+        double collision_weight = 5000000.0;     // 碰撞约束权重
         double moment_weight = 300.0;           // 力矩约束权重
         double mean_time_weight = 300.0;        // 时间分布均衡权重
         double cen_acc_weight = 300.0;          // 向心加速度约束权重

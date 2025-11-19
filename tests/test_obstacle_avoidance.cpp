@@ -40,13 +40,13 @@ bool test_single_obstacle() {
     
     input.start_state.resize(2, 3);
     input.start_state << 
-        0.0, 0.0, 0.0,
-        0.0, 0.0, 0.0;
+        0.0, 0.0, 0.0,  // yaw状态: [yaw, dyaw, ddyaw]
+        0.0, 0.0, 0.0;  // s状态: [s, ds, dds]
     
     input.final_state.resize(2, 3);
     input.final_state << 
-        0.0, 0.0, 0.0,
-        10.0, 0.0, 0.0;
+        0.0, 0.0, 0.0,  // yaw状态: [yaw, dyaw, ddyaw]
+        10.0, 0.0, 0.0; // s状态: [s, ds, dds]
     
     input.start_state_XYTheta = Eigen::Vector3d(0.0, 0.0, 0.0);
     input.final_state_XYTheta = Eigen::Vector3d(10.0, 0.0, 0.0);
@@ -239,13 +239,13 @@ bool test_multiple_obstacles() {
     
     input.start_state.resize(2, 3);
     input.start_state << 
-        0.0, 0.0, 0.0,
-        0.0, 0.0, 0.0;
+        0.0, 0.0, 0.0,  // yaw状态: [yaw, dyaw, ddyaw]
+        0.0, 0.0, 0.0;  // s状态: [s, ds, dds]
     
     input.final_state.resize(2, 3);
-    input.final_state << 
-        0.0, 0.0, 0.0,
-        10.0, 0.0, 0.0;
+    input.start_state << 
+        0.0, 0.0, 0.0,  // yaw状态: [yaw, dyaw, ddyaw]
+        10.0, 0.0, 0.0;  // s状态: [s, ds, dds]
     
     input.start_state_XYTheta = Eigen::Vector3d(0.0, 0.0, 0.0);
     input.final_state_XYTheta = Eigen::Vector3d(10.0, 0.0, 0.0);
@@ -337,13 +337,13 @@ bool test_multiple_obstacles() {
     std::cout << "  Y误差: " << position_error.y() * 1000.0 << " mm\n";
     std::cout << "  角度误差: " << angle_error * 180.0 / M_PI << " deg\n";
     
-    std::cout << "\n避障信息:\n";
-    for (size_t j = 0; j < obstacles.size(); j++) {
-        std::cout << "  障碍物" << (j+1) << " @ (" 
-                  << obstacles[j].x() << ", " 
-                  << obstacles[j].y() << "): "
-                  << "最小距离 = " << min_distances[j] * 1000.0 << " mm\n";
-    }
+    // std::cout << "\n避障信息:\n";
+    // for (size_t j = 0; j < obstacles.size(); j++) {
+    //     std::cout << "  障碍物" << (j+1) << " @ (" 
+    //               << obstacles[j].x() << ", " 
+    //               << obstacles[j].y() << "): "
+    //               << "最小距离 = " << min_distances[j] * 1000.0 << " mm\n";
+    // }
     std::cout << "  整体最小距离: " << overall_min_distance * 1000.0 << " mm\n";
     std::cout << "  安全距离: " << config.safe_distance * 1000.0 << " mm\n";
     
@@ -413,29 +413,34 @@ bool test_near_boundary() {
     std::cout << "\n========== Test: Near Boundary ==========\n";
     
     OptimizerConfig config = OptimizerConfig::defaultConfig();
+    config.kinematic.max_vel = 0.8;
+    config.kinematic.min_vel = -0.8;
+    config.kinematic.max_acc = 0.5;
+    config.kinematic.max_omega = 0.4;
+    config.kinematic.max_domega = 5.0;
+    config.kinematic.max_centripetal_acc = 1.0;
+    config.kinematic.directly_constrain_v_omega = true;
     config.verbose = false;
-    config.safe_distance = 0.0;
+    // 增加安全距离，确保车体不会侵入墙体
+    config.safe_distance = 0.05;
+    // 增加采样分辨率，提高碰撞检测精度
+    config.sparse_resolution = 16;
     
     auto collision_checker = std::make_shared<SimpleCircleObstacles>(
         Eigen::Vector2d(-10, -10),
         Eigen::Vector2d(10, 10)
     );
     
-    // 添加多个障碍物
-    std::vector<Eigen::Vector3d> obstacles = {
-        Eigen::Vector3d(0.0, 0.05, 0.05),
-        Eigen::Vector3d(-0.25, 0.05, 0.05),
-        Eigen::Vector3d(-0.5, 0.05, 0.05),
-        Eigen::Vector3d(-0.75, 0.05, 0.05),
-        Eigen::Vector3d(-1.0, 0.05, 0.05),
-        Eigen::Vector3d(-1.0, -1.5, 0.05),
-        Eigen::Vector3d(-1.25, 0.05, 0.05),
-        Eigen::Vector3d(-1.5, 0.05, 0.05),
-        Eigen::Vector3d(-1.75, 0.05, 0.05),
-        Eigen::Vector3d(-2.0, 0.05, 0.05),
-        Eigen::Vector3d(-2.0, -0.5, 0.05),
-        Eigen::Vector3d(-2.0, -1.0, 0.05),
-    };
+    // 添加多个障碍物模拟墙体边界
+    std::vector<Eigen::Vector3d> obstacles;
+    double obstacle_radius = 0.05;
+    for (int i = 0; i < 60; ++i) {
+        obstacles.push_back(Eigen::Vector3d(-2 + i * 0.1, 0.1, obstacle_radius));
+        obstacles.push_back(Eigen::Vector3d(-2 + i * 0.1, -3.0, obstacle_radius));
+    }
+    obstacles.push_back(Eigen::Vector3d(-0.5, -2.0, obstacle_radius));
+    obstacles.push_back(Eigen::Vector3d(4.0, -2.0, obstacle_radius));
+    obstacles.push_back(Eigen::Vector3d(4.0, -1.0, obstacle_radius));
     for (const auto& obstacle : obstacles) {
         collision_checker->addObstacle(obstacle.x(), obstacle.y(), obstacle.z());
     }
@@ -446,31 +451,31 @@ bool test_near_boundary() {
     
     TrajectoryInput input;
 
-    double init_x = -0.5;
+    double init_x = 0.75;
     double init_y = -1.0;
     double init_theta = 0.0;
 
-    double final_x = -1.5;
+    double final_x = -1.25;
     double final_y = -0.5;
     double final_theta = 0.0;
     double final_s = 2.0;
     
     input.start_state.resize(2, 3);
     input.start_state << 
-        init_theta, 0.0, 0.0,
-        0.0, 0.0, 0.0;
+        init_theta, 0.0, 0.0, // yaw状态: [yaw, dyaw, ddyaw]
+        0.0, 0.0, 0.0;        // s状态: [s, ds, dds]
     
     input.final_state.resize(2, 3);
     input.final_state << 
-        0.0, 0.0, 0.0,
-        final_s, 0.0, 0.0;
+        0.0, 0.0, 0.0,        // yaw状态: [yaw, dyaw, ddyaw]
+        final_s, 0.0, 0.0;    // s状态: [s, ds, dds]
     
     input.start_state_XYTheta = Eigen::Vector3d(init_x, init_y, init_theta);
     input.final_state_XYTheta = Eigen::Vector3d(final_x, final_y, final_theta);
 
     // 提供途径点
-    input.waypoints.push_back(Eigen::Vector3d(0.0, -1.0, 0.5));
-    input.waypoint_positions.push_back(Eigen::Vector3d(-1.0, final_y, 0.0));
+    input.waypoints.push_back(Eigen::Vector3d(0.0, 1.0, 0.0));
+    input.waypoint_positions.push_back(Eigen::Vector3d(init_x - 1, init_y, 0.0));
     
     input.initial_segment_time = 1.0;
     input.is_cut = false;
@@ -553,13 +558,13 @@ bool test_near_boundary() {
     std::cout << "  Y误差: " << position_error.y() * 1000.0 << " mm\n";
     std::cout << "  角度误差: " << angle_error * 180.0 / M_PI << " deg\n";
     
-    std::cout << "\n避障信息:\n";
-    for (size_t j = 0; j < obstacles.size(); j++) {
-        std::cout << "  障碍物" << (j+1) << " @ (" 
-                  << obstacles[j].x() << ", " 
-                  << obstacles[j].y() << "): "
-                  << "最小距离 = " << min_distances[j] * 1000.0 << " mm\n";
-    }
+    // std::cout << "\n避障信息:\n";
+    // for (size_t j = 0; j < obstacles.size(); j++) {
+    //     std::cout << "  障碍物" << (j+1) << " @ (" 
+    //               << obstacles[j].x() << ", " 
+    //               << obstacles[j].y() << "): "
+    //               << "最小距离 = " << min_distances[j] * 1000.0 << " mm\n";
+    // }
     std::cout << "  整体最小距离: " << overall_min_distance * 1000.0 << " mm\n";
     std::cout << "  安全距离: " << config.safe_distance * 1000.0 << " mm\n";
     

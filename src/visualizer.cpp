@@ -210,6 +210,33 @@ void TrajectoryVisualizer::drawVehiclePolygons(const Trajectory<5, 2>& traj,
                                                const std::vector<Eigen::Vector2d>& check_points) {
     if (check_points.empty()) return;
     
+    // 提取四个角点用于可视化（只绘制车体框，不绘制所有检查点）
+    std::vector<Eigen::Vector2d> corner_points;
+    if (check_points.size() >= 4) {
+        // 如果至少有4个点，使用前4个点（它们应该是四个角点）
+        corner_points.push_back(check_points[0]);  // 右前
+        corner_points.push_back(check_points[1]);  // 左前
+        corner_points.push_back(check_points[2]);  // 左后
+        corner_points.push_back(check_points[3]);  // 右后
+    } else {
+        // 如果少于4个点，尝试从所有点中提取四个角点
+        double max_x = check_points[0].x(), min_x = check_points[0].x();
+        double max_y = check_points[0].y(), min_y = check_points[0].y();
+        
+        for (const auto& pt : check_points) {
+            max_x = std::max(max_x, pt.x());
+            min_x = std::min(min_x, pt.x());
+            max_y = std::max(max_y, pt.y());
+            min_y = std::min(min_y, pt.y());
+        }
+        
+        // 四个角点：右前、左前、左后、右后
+        corner_points.push_back(Eigen::Vector2d(max_x, max_y));  // 右前
+        corner_points.push_back(Eigen::Vector2d(max_x, min_y));  // 左前
+        corner_points.push_back(Eigen::Vector2d(min_x, min_y));  // 左后
+        corner_points.push_back(Eigen::Vector2d(min_x, max_y));  // 右后
+    }
+    
     double total_time = traj.getTotalDuration();
     double dt = 0.1;  // 每0.1秒采样一次车体
     int num_samples = static_cast<int>(total_time / dt) + 1;
@@ -238,17 +265,17 @@ void TrajectoryVisualizer::drawVehiclePolygons(const Trajectory<5, 2>& traj,
             }
         }
         
-        // 计算车体多边形在当前位置和角度下的坐标
+        // 计算车体多边形在当前位置和角度下的坐标（只使用四个角点）
         std::vector<double> poly_x, poly_y;
-        for (const auto& check_point : check_points) {
+        for (const auto& corner_point : corner_points) {
             // 将车体局部坐标转换为全局坐标
             double cos_yaw = cos(current_XYTheta.z());
             double sin_yaw = sin(current_XYTheta.z());
             
             double global_x = current_XYTheta.x() + 
-                check_point.x() * cos_yaw - check_point.y() * sin_yaw;
+                corner_point.x() * cos_yaw - corner_point.y() * sin_yaw;
             double global_y = current_XYTheta.y() + 
-                check_point.x() * sin_yaw + check_point.y() * cos_yaw;
+                corner_point.x() * sin_yaw + corner_point.y() * cos_yaw;
             
             poly_x.push_back(global_x);
             poly_y.push_back(global_y);

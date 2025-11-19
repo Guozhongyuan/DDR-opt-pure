@@ -10,12 +10,43 @@ OptimizerConfig OptimizerConfig::defaultConfig() {
     
     // 使用默认值（已在结构体中定义）
     
-    // 设置默认车体检查点（四角，按顺时针顺序）
+    // 设置默认车体检查点（增强版：四角 + 边缘密集检查点）
+    // 车体尺寸：前后2.5m (1.75 - (-0.75) = 2.5m)，左右1.0m (0.5 - (-0.5) = 1.0m)
     config.check_points.clear();
-    config.check_points.emplace_back(1.7, 0.5);   // 右前
-    config.check_points.emplace_back(1.7, -0.5);  // 左前
-    config.check_points.emplace_back(-0.3, -0.5); // 左后
-    config.check_points.emplace_back(-0.3, 0.5);  // 右后
+    
+    // 四角检查点
+    config.check_points.emplace_back(1.75, 0.5);   // 右前
+    config.check_points.emplace_back(1.75, -0.5);  // 左前
+    config.check_points.emplace_back(-0.75, -0.5); // 左后
+    config.check_points.emplace_back(-0.75, 0.5);  // 右后
+    
+    // 前边缘检查点（增加密度，防止车头侵入）
+    int front_edge_points = 5;  // 前边缘检查点数量
+    for (int i = 1; i < front_edge_points; ++i) {
+        double y = -0.5 + i * (1.0 / front_edge_points);
+        config.check_points.emplace_back(1.75, y);
+    }
+    
+    // 后边缘检查点
+    int back_edge_points = 5;  // 后边缘检查点数量
+    for (int i = 1; i < back_edge_points; ++i) {
+        double y = -0.5 + i * (1.0 / back_edge_points);
+        config.check_points.emplace_back(-0.75, y);
+    }
+    
+    // 左侧边缘检查点（增加密度，防止左侧侵入）
+    int left_edge_points = 8;  // 左侧边缘检查点数量
+    for (int i = 1; i < left_edge_points; ++i) {
+        double x = -0.75 + i * (2.5 / left_edge_points);
+        config.check_points.emplace_back(x, -0.5);
+    }
+    
+    // 右侧边缘检查点
+    int right_edge_points = 8;  // 右侧边缘检查点数量
+    for (int i = 1; i < right_edge_points; ++i) {
+        double x = -0.75 + i * (2.5 / right_edge_points);
+        config.check_points.emplace_back(x, 0.5);
+    }
     
     return config;
 }

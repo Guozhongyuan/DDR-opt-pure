@@ -2,13 +2,13 @@
 # 纯净版后端轨迹优化器配置
 
 # ============ 运动学约束 ============
-max_vel: 5.0                      # 最大线速度 (m/s)
-min_vel: -5.0                     # 最小线速度 (m/s)
-max_acc: 5.0                      # 最大加速度 (m/s²)
-max_omega: 1.0                    # 最大角速度 (rad/s)
-max_domega: 50.0                  # 最大角加速度 (rad/s²)
-max_centripetal_acc: 10000.0      # 最大向心加速度 (m/s²)
-if_directly_constrain_v_omega: false  # 是否直接约束速度和角速度
+max_vel: 0.8                      # 最大线速度 (m/s)
+min_vel: -0.8                     # 最小线速度 (m/s)
+max_acc: 0.5                      # 最大加速度 (m/s²)
+max_omega: 0.4                    # 最大角速度 (rad/s)
+max_domega: 5.0                  # 最大角加速度 (rad/s²)
+max_centripetal_acc: 1.0      # 最大向心加速度 (m/s²)
+if_directly_constrain_v_omega: true  # 是否直接约束速度和角速度
 
 # ============ 惩罚权重 ============
 time_weight: 50.0                 # 时间权重
